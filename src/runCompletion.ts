@@ -1,16 +1,16 @@
-import { Position, Range, TextDocument, WorkspaceConfiguration, workspace, window, env, Uri } from "vscode";
-import {URL} from "url";
+import { Position, Range, TextDocument, WorkspaceConfiguration, workspace } from "vscode";
 import fetch from "node-fetch";
 import { AutocompleteResult, ResultEntry } from "./binary/requests/requests";
 import { CHAR_LIMIT, FULL_BRAND_REPRESENTATION } from "./globals/consts";
 import languages from "./globals/languages";
 import { setDefaultStatus, setLoadingStatus } from "./statusBar/statusBar";
-import { logInput, logOutput } from "./outputChannels";
+import { logOutput } from "./outputChannels";
 import { getTabnineExtensionContext } from "./globals/tabnineExtensionContext";
+import { Response } from "node-fetch";
 
 export type CompletionType = "normal" | "snippet";
 
-let didShowTokenWarning = false;
+//let didShowTokenWarning = false;
 
 export default async function runCompletion(
   document: TextDocument,
@@ -42,8 +42,8 @@ export default async function runCompletion(
   const context = getTabnineExtensionContext();
   const apiToken = await context?.secrets.get("apiToken");
 
-  let endpoint = ""
-  try{
+  let endpoint = "http://20.246.192.153/worker_generate"
+  /* try{
     new URL(modelIdOrEndpoint);
     endpoint = modelIdOrEndpoint;
   }catch(e){
@@ -60,12 +60,12 @@ export default async function runCompletion(
         }
       });
     }
-  }
+  } */
 
   // use FIM (fill-in-middle) mode if suffix is available
   const inputs = suffix.trim() ? `${startToken}${prefix}${endToken}${suffix}${middleToken}` : prefix;
 
-  const data = {
+  /* const data = {
     inputs,
     parameters: {
       max_new_tokens: 60,
@@ -74,19 +74,28 @@ export default async function runCompletion(
       top_p: 0.95,
       stop: [stopToken]
     }
-  };
+  }; */
+  const data = {
+    "model": modelIdOrEndpoint,
+    "prompt": inputs,
+    "temperature": temperature,
+    "max_new_tokens": 2048,
+    "stop": stopToken
+  }
 
-  logInput(inputs, data.parameters);
+  // logInput(inputs, data.parameters);
 
   const headers = {
     "Content-Type": "application/json",
     "Authorization": "",
+    "Host": "test.myllm.example.com",
+    "User-Agent": "FastChat Client"
   };
   if(apiToken){
     headers.Authorization = `Bearer ${apiToken}`;
   }
 
-  const res = await fetch(endpoint, {
+  const res: Response = await fetch(endpoint, {
     method: "POST",
     headers,
     body: JSON.stringify(data),
@@ -98,7 +107,12 @@ export default async function runCompletion(
     return null;
   }
 
-  const generatedTextRaw = getGeneratedText(await res.json());
+  //const resContent = await res.text()
+  //console.log(resContent)
+
+  //const generatedTextRaw = getGeneratedText(await JSON.parse(resContent));
+
+  const generatedTextRaw = getGeneratedText(await res.json())
 
   let generatedText = generatedTextRaw;
   if(generatedText.slice(0, inputs.length) === inputs){
@@ -125,7 +139,7 @@ export default async function runCompletion(
 }
 
 function getGeneratedText(json: any): string{
-  return json?.generated_text ?? json?.[0].generated_text ?? "";
+  return json?.text ?? json?.[0].text ?? "";
 }
 
 export type KnownLanguageType = keyof typeof languages;

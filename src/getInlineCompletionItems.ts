@@ -11,7 +11,7 @@ const INLINE_REQUEST_TIMEOUT = 3000;
 export default async function getInlineCompletionItems(
   document: vscode.TextDocument,
   position: vscode.Position
-): Promise<vscode.InlineCompletionList<TabnineInlineCompletionItem>> {
+): Promise<vscode.InlineCompletionList> {
   const isEmptyLine = document.lineAt(position.line).text.trim().length === 0;
 
   const response = await runCompletion(
@@ -37,8 +37,8 @@ export default async function getInlineCompletionItems(
         result.completion_metadata?.snippet_context
       )
   );
-
-  return new vscode.InlineCompletionList(completions || []);
+  
+  return new vscode.InlineCompletionList(completions as vscode.InlineCompletionItem[] || []);
 }
 
 function calculateRange(

@@ -1,5 +1,4 @@
 import * as vscode from "vscode";
-import TabnineInlineCompletionItem from "./inlineSuggestions/tabnineInlineCompletionItem";
 import { completionIsAllowed } from "./provideCompletionItems";
 import { getShouldComplete } from "./inlineSuggestions/documentChangesTracker";
 import getInlineCompletionItems from "./getInlineCompletionItems";
@@ -31,7 +30,7 @@ export default async function provideInlineCompletionItems(
   _context: vscode.InlineCompletionContext,
   _token: vscode.CancellationToken
 ): Promise<
-  vscode.InlineCompletionList<TabnineInlineCompletionItem> | undefined
+  vscode.InlineCompletionList | undefined
 > {
   try {
     if (
